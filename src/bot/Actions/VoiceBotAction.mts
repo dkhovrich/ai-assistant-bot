@@ -11,7 +11,7 @@ import { LoggerFactory } from "../../logger/logger.factory.mjs";
 import { SpeechToTextService } from "../../services/speech-to-text.service.mjs";
 import { AudioConverterService } from "../../services/audio-converter.service.mjs";
 import { AiBotAction } from "./AiBotAction.mjs";
-import { AiService } from "../../services/ai.service.mjs";
+import { ChatService } from "../../services/chat.service.mjs";
 
 export class VoiceBotAction extends AiBotAction implements BotAction {
     private static dirname = dirname(fileURLToPath(import.meta.url));
@@ -20,10 +20,10 @@ export class VoiceBotAction extends AiBotAction implements BotAction {
     public constructor(
         private readonly audioConverterService: AudioConverterService,
         private readonly speechToTextService: SpeechToTextService,
-        aiService: AiService,
+        chatService: ChatService,
         loggerFactory: LoggerFactory
     ) {
-        super(aiService, loggerFactory, "voice");
+        super(chatService, loggerFactory, "voice");
     }
 
     public configure(bot: TelegrafBot): void {

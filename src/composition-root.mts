@@ -11,7 +11,7 @@ import { OpenAiSpeechToTextService, SpeechToTextService } from "./services/speec
 import { AudioConverterService, AudioConverterServiceImpl } from "./services/audio-converter.service.mjs";
 import { BotWebhook } from "./bot/bot.webhook.mjs";
 import { absurd } from "./utils/absurd.mjs";
-import { AiService, OpenAiService } from "./services/ai.service.mjs";
+import { ChatService, OpenAiChatService } from "./services/chat.service.mjs";
 import { InitBotAction } from "./bot/Actions/InitBotAction.mjs";
 import { TextBotAction } from "./bot/Actions/TextBotAction.mjs";
 import { SessionMiddleware } from "./middlewares/session.middleware.mjs";
@@ -22,7 +22,7 @@ export const TOKENS = {
         config: token<ConfigService>("config.service"),
         audioConverter: token<AudioConverterService>("audio-converter.service"),
         speechToText: token<SpeechToTextService>("speech-to-text.service"),
-        ai: token<AiService>("ai.service")
+        ai: token<ChatService>("ai.service")
     },
     loggerFactory: token<LoggerFactory>("logger.factory"),
     middleware: {
@@ -93,8 +93,8 @@ function createServices(container: Container): void {
 
     container.bind(TOKENS.service.audioConverter).toInstance(AudioConverterServiceImpl).inSingletonScope();
 
-    injected(OpenAiService, TOKENS.service.config);
-    container.bind(TOKENS.service.ai).toInstance(OpenAiService).inSingletonScope();
+    injected(OpenAiChatService, TOKENS.service.config);
+    container.bind(TOKENS.service.ai).toInstance(OpenAiChatService).inSingletonScope();
 }
 
 export function createContainer(): Container {

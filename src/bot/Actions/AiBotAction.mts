@@ -1,4 +1,4 @@
-import { AiService, Message } from "../../services/ai.service.mjs";
+import { ChatService, Message } from "../../services/chat.service.mjs";
 import { Session } from "../types.mjs";
 import { Logger } from "../../logger/types.mjs";
 import { LoggerFactory } from "../../logger/logger.factory.mjs";
@@ -11,7 +11,7 @@ export abstract class AiBotAction {
     protected readonly logger: Logger;
 
     protected constructor(
-        private readonly aiService: AiService,
+        private readonly chatService: ChatService,
         loggerFactory: LoggerFactory,
         command: "voice" | "text"
     ) {
@@ -20,7 +20,7 @@ export abstract class AiBotAction {
 
     protected async chat(session: Session, message: string): Promise<Message> {
         session.messages.push({ role: "user", message });
-        const response = await this.aiService.chat(session.messages);
+        const response = await this.chatService.chat(session.messages);
         session.messages.push(response);
         return response;
     }

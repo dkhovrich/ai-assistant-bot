@@ -1,5 +1,5 @@
 import { Context, Telegraf } from "telegraf";
-import { Message } from "../services/ai.service.mjs";
+import { Message } from "../services/chat.service.mjs";
 
 export interface Session {
     messages: Message[];

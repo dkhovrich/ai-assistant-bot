@@ -1,8 +1,7 @@
-import { Configuration, OpenAIApi } from "openai";
-import { ConfigService } from "./config.service.mjs";
 import { ChatCompletionRequestMessage } from "openai/api.js";
+import { OpenAiService } from "./openAi.service.mjs";
 
-export interface AiService {
+export interface ChatService {
     chat(messages: Message[]): Promise<Message>;
 }
 
@@ -13,13 +12,7 @@ export interface Message {
     message: string;
 }
 
-export class OpenAiService implements AiService {
-    private readonly openai: OpenAIApi;
-
-    public constructor(configService: ConfigService) {
-        this.openai = new OpenAIApi(new Configuration({ apiKey: configService.get("openAiKey") }));
-    }
-
+export class OpenAiChatService extends OpenAiService implements ChatService {
     public async chat(messages: Message[]): Promise<Message> {
         const response = await this.openai.createChatCompletion({
             model: "gpt-3.5-turbo",

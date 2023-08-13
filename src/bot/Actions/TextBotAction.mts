@@ -3,12 +3,12 @@ import { AiBotAction } from "./AiBotAction.mjs";
 import { BotAction } from "./types.mjs";
 import { initialSession, TelegrafBot } from "../types.mjs";
 import { code } from "telegraf/format";
-import { AiService } from "../../services/ai.service.mjs";
+import { ChatService } from "../../services/chat.service.mjs";
 import { LoggerFactory } from "../../logger/logger.factory.mjs";
 
 export class TextBotAction extends AiBotAction implements BotAction {
-    public constructor(aiService: AiService, loggerFactory: LoggerFactory) {
-        super(aiService, loggerFactory, "text");
+    public constructor(chatService: ChatService, loggerFactory: LoggerFactory) {
+        super(chatService, loggerFactory, "text");
     }
 
     public configure(bot: TelegrafBot): void {
