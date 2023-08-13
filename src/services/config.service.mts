@@ -16,7 +16,7 @@ const configSchema = z.object({
     telegramToken: z.string(),
     openAiKey: z.string(),
     env: envSchema,
-    userIds: z.number().array(),
+    userIds: z.number().array()
 });
 
 export type Config = z.infer<typeof configSchema>;
@@ -53,7 +53,7 @@ export class ConfigServiceImpl implements ConfigService {
             telegramToken: process.env.TELEGRAM_TOKEN,
             openAiKey: process.env.OPENAI_KEY,
             env: process.env.NODE_ENV,
-            userIds: process.env.ALLOWED_USER_IDS.split(",").map(id => parseInt(id)),
+            userIds: process.env.ALLOWED_USER_IDS.split(",").map(id => parseInt(id))
         };
         return configSchema.parse(configuration);
     }

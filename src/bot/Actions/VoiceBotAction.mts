@@ -1,47 +1,51 @@
 import axios from "axios";
-import {createWriteStream} from "node:fs";
-import {unlink} from "node:fs/promises";
-import {dirname, resolve} from "node:path";
-import {message} from "telegraf/filters";
-import {code} from "telegraf/format";
-import {BotAction} from "./types.mjs";
-import {TelegrafBot} from "../types.mjs";
-import {fileURLToPath} from "node:url";
-import {Logger} from "../../logger/types.mjs";
-import {LoggerFactory} from "../../logger/logger.factory.mjs";
-import {SpeechToTextService} from "../../services/speech-to-text.service.mjs";
-import {AudioConverterService} from "../../services/audio-converter.service.mjs";
+import { createWriteStream } from "node:fs";
+import { unlink } from "node:fs/promises";
+import { dirname, resolve } from "node:path";
+import { message } from "telegraf/filters";
+import { code } from "telegraf/format";
+import { BotAction } from "./types.mjs";
+import { initialSession, TelegrafBot } from "../types.mjs";
+import { fileURLToPath } from "node:url";
+import { LoggerFactory } from "../../logger/logger.factory.mjs";
+import { SpeechToTextService } from "../../services/speech-to-text.service.mjs";
+import { AudioConverterService } from "../../services/audio-converter.service.mjs";
+import { AiBotAction } from "./AiBotAction.mjs";
+import { AiService } from "../../services/ai.service.mjs";
 
-export class VoiceBotAction implements BotAction {
+export class VoiceBotAction extends AiBotAction implements BotAction {
     private static dirname = dirname(fileURLToPath(import.meta.url));
     private static voicesFolderPath = resolve(VoiceBotAction.dirname, "../../../voices");
-    private readonly logger: Logger;
 
     public constructor(
         private readonly audioConverterService: AudioConverterService,
         private readonly speechToTextService: SpeechToTextService,
+        aiService: AiService,
         loggerFactory: LoggerFactory
     ) {
-        this.logger = loggerFactory.create("voice");
+        super(aiService, loggerFactory, "voice");
     }
 
     public configure(bot: TelegrafBot): void {
         bot.on(message("voice"), async ctx => {
             try {
-                await ctx.reply(code("Converting..."));
+                ctx.session ??= initialSession;
+                await ctx.reply(code(AiBotAction.acceptedResponse));
                 const link = await ctx.telegram.getFileLink(ctx.message.voice.file_id);
                 const userId = String(ctx.message.from.id);
 
                 const [oggPath, mp3Path] = await this.getAudioFiles(link, userId);
-                const transcription = await this.speechToTextService.transcribe(mp3Path);
-
+                const text = await this.speechToTextService.transcribe(mp3Path);
                 await Promise.all([oggPath, mp3Path].map(path => this.removeFile(path)));
-                await ctx.reply(transcription);
+
+                await ctx.reply(code(`Ваш запрос: ${text}`));
+                const response = await this.chat(ctx.session, text);
+                await ctx.reply(response.message);
             } catch (error) {
                 if (error instanceof Error) {
                     this.logger.error("Error processing action", error);
                 }
-                await ctx.reply(code("Something went wrong..."));
+                await ctx.reply(code(AiBotAction.errorResponse));
             }
         });
     }

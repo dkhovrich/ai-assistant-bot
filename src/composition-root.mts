@@ -6,27 +6,33 @@ import { BotServer } from "./bot/bot.server.mjs";
 import { Middleware } from "./middlewares/middleware.types.mjs";
 import { AuthMiddleware } from "./middlewares/auth.middleware.mjs";
 import { BotAction } from "./bot/Actions/types.mjs";
-import { StartBotAction } from "./bot/Actions/StartBotAction.mjs";
 import { VoiceBotAction } from "./bot/Actions/VoiceBotAction.mjs";
 import { OpenAiSpeechToTextService, SpeechToTextService } from "./services/speech-to-text.service.mjs";
 import { AudioConverterService, AudioConverterServiceImpl } from "./services/audio-converter.service.mjs";
 import { BotWebhook } from "./bot/bot.webhook.mjs";
 import { absurd } from "./utils/absurd.mjs";
+import { AiService, OpenAiService } from "./services/ai.service.mjs";
+import { InitBotAction } from "./bot/Actions/InitBotAction.mjs";
+import { TextBotAction } from "./bot/Actions/TextBotAction.mjs";
+import { SessionMiddleware } from "./middlewares/session.middleware.mjs";
 
 export const TOKENS = {
     bot: token<IBot>("bot"),
     service: {
         config: token<ConfigService>("config.service"),
         audioConverter: token<AudioConverterService>("audio-converter.service"),
-        speechToText: token<SpeechToTextService>("speech-to-text.service")
+        speechToText: token<SpeechToTextService>("speech-to-text.service"),
+        ai: token<AiService>("ai.service")
     },
     loggerFactory: token<LoggerFactory>("logger.factory"),
     middleware: {
         auth: token<Middleware>("middleware.auth"),
+        session: token<Middleware>("middleware.session"),
         all: token<Middleware[]>("middlewares")
     },
     action: {
-        start: token<BotAction>("action.start"),
+        init: token<BotAction>("action.init"),
+        text: token<BotAction>("action.text"),
         voice: token<BotAction>("action.voice"),
         all: token<BotAction[]>("action.all")
     }
@@ -35,23 +41,32 @@ export const TOKENS = {
 function createMiddlewares(container: Container): void {
     injected(AuthMiddleware, TOKENS.service.config);
     container.bind(TOKENS.middleware.auth).toInstance(AuthMiddleware).inSingletonScope();
-    container.bind(TOKENS.middleware.all).toConstant([TOKENS.middleware.auth].map(token => container.get(token)));
+
+    container.bind(TOKENS.middleware.session).toInstance(SessionMiddleware).inSingletonScope();
+
+    container
+        .bind(TOKENS.middleware.all)
+        .toConstant([TOKENS.middleware.auth, TOKENS.middleware.session].map(token => container.get(token)));
 }
 
 function createActions(container: Container): void {
-    container.bind(TOKENS.action.start).toInstance(StartBotAction).inSingletonScope();
+    container.bind(TOKENS.action.init).toInstance(InitBotAction).inSingletonScope();
+
+    injected(TextBotAction, TOKENS.service.ai, TOKENS.loggerFactory);
+    container.bind(TOKENS.action.text).toInstance(TextBotAction).inSingletonScope();
 
     injected(
         VoiceBotAction,
         TOKENS.service.audioConverter,
         TOKENS.service.speechToText,
+        TOKENS.service.ai,
         TOKENS.loggerFactory
     );
     container.bind(TOKENS.action.voice).toInstance(VoiceBotAction).inSingletonScope();
 
     container
         .bind(TOKENS.action.all)
-        .toConstant([TOKENS.action.start, TOKENS.action.voice].map(token => container.get(token)));
+        .toConstant([TOKENS.action.init, TOKENS.action.text, TOKENS.action.voice].map(token => container.get(token)));
 }
 
 function createBot(container: Container): void {
@@ -77,6 +92,9 @@ function createServices(container: Container): void {
     container.bind(TOKENS.service.speechToText).toInstance(OpenAiSpeechToTextService).inSingletonScope();
 
     container.bind(TOKENS.service.audioConverter).toInstance(AudioConverterServiceImpl).inSingletonScope();
+
+    injected(OpenAiService, TOKENS.service.config);
+    container.bind(TOKENS.service.ai).toInstance(OpenAiService).inSingletonScope();
 }
 
 export function createContainer(): Container {

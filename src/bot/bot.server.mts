@@ -1,6 +1,6 @@
 import { Bot } from "./bot.mjs";
 import { TelegrafBot } from "./types.mjs";
-import { Context, Telegraf } from "telegraf";
+import { Telegraf } from "telegraf";
 
 export class BotServer extends Bot {
     public async launch(): Promise<void> {
@@ -17,6 +17,6 @@ export class BotServer extends Bot {
     }
 
     protected createBot(): TelegrafBot {
-        return new Telegraf<Context>(this.token);
+        return new Telegraf(this.token);
     }
 }
