@@ -4,3 +4,4 @@ dist
 .idea
 Dockerfile
 session.json
+.env
